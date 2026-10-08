@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequence Explorer – Interactive Learning Game</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --accent: #10b981;
+    --accent-dark: #059669;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0fdf4 50%, #fef3c7 100%);
+    min-height: 100vh;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  header h1 {
+    font-size: 2rem;
+    color: var(--primary-dark);
+    margin-bottom: 0.25rem;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 1.05rem;
+  }
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 0.75rem 1.25rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .score-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+  .score-item span.value {
+    background: var(--primary);
+    color: white;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav-tab {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+  }
+  .nav-tab:hover { border-color: var(--primary); color: var(--primary); }
+  .nav-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .panel {
+    display: none;
+    background: var(--card);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow);
+    animation: fadeIn 0.35s ease;
+  }
+  .panel.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  h2 {
+    font-size: 1.45rem;
+    color: var(--primary-dark);
+    margin-bottom: 0.75rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    color: var(--text);
+    margin: 1.25rem 0 0.5rem;
+  }
+  p, li { margin-bottom: 0.6rem; }
+  .concept-box {
+    background: #f0f9ff;
+    border-left: 5px solid var(--primary);
+    padding: 1rem 1.25rem;
+    border-radius: 0 12px 12px 0;
+    margin: 1rem 0;
+  }
+  .machine {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 2px dashed #cbd5e1;
+  }
+  .machine-box {
+    text-align: center;
+  }
+  .machine-box label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+  }
+  .machine-input, .machine-output {
+    width: 90px;
+    height: 60px;
+    border-radius: 12px;
+    border: 3px solid var(--primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    background: #eef2ff;
+  }
+  .machine-output {
+    background: #ecfdf5;
+    border-color: var(--accent);
+    color: var(--accent-dark);
+  }
+  .number-machine {
+    background: linear-gradient(180deg, #a7f3d0, #34d399);
+    border: 3px solid #059669;
+    border-radius: 14px;
+    padding: 1rem 1.5rem;
+    min-width: 160px;
+    box-shadow: 0 6px 0 #047857;
+    position: relative;
+  }
+  .number-machine .formula {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #064e3b;
+  }
+  .number-machine .label {
+    font-size: 0.8rem;
+    color: #065f46;
+    margin-top: 0.25rem;
+  }
+  .arrow {
+    font-size: 2rem;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1.4rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 0 var(--primary-dark);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--primary-dark); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--primary-dark); }
+  .btn-accent { background: var(--accent); box-shadow: 0 4px 0 var(--accent-dark); }
+  .btn-accent:hover { box-shadow: 0 6px 0 var(--accent-dark); }
+  .btn-warning { background: var(--warning); box-shadow: 0 4px 0 #d97706; color: #1e293b; }
+  .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.9rem; }
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  .sequence-display {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+  .term-chip {
+    background: #e0e7ff;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 48px;
+    text-align: center;
+  }
+  .term-chip .n-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .dots-figure {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0.75rem;
+  }
+  .dots-row {
+    display: flex;
+    gap: 4px;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  .figure-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+  }
+  .quiz-card {
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    border: 2px solid var(--border);
+  }
+  .quiz-options {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .quiz-option {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem;
+    transition: all 0.15s;
+  }
+  .quiz-option:hover { border-color: var(--primary); background: #eef2ff; }
+  .quiz-option.correct {
+    border-color: var(--accent);
+    background: #ecfdf5;
+  }
+  .quiz-option.wrong {
+    border-color: var(--danger);
+    background: #fef2f2;
+  }
+  .feedback {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.good { background: #ecfdf5; color: #065f46; border: 2px solid #6ee7b7; }
+  .feedback.bad { background: #fef2f2; color: #991b1b; border: 2px solid #fca5a5; }
+  .input-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+  }
+  .input-row input[type="number"] {
+    width: 100px;
+    padding: 0.6rem;
+    font-size: 1.2rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .input-row input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  .level-badge {
+    display: inline-block;
+    background: var(--warning);
+    color: #1e293b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+  }
+  .progress-bar {
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 0.75rem 0 1.25rem;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .star {
+    color: #fbbf24;
+    font-size: 1.3rem;
+  }
+  .hint {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 0.5rem;
+  }
+  .formula-big {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    text-align: center;
+    margin: 1rem 0;
+    letter-spacing: 1px;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.55rem 0.75rem;
+    text-align: center;
+  }
+  th { background: #e0e7ff; font-weight: 700; }
+  .celebration {
+    text-align: center;
+    padding: 2rem;
+  }
+  .celebration h2 { color: var(--accent-dark); }
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.5rem; }
+    .machine { gap: 0.5rem; }
+    .machine-input, .machine-output { width: 70px; height: 50px; font-size: 1.2rem; }
+    .number-machine { min-width: 120px; padding: 0.75rem 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔢 Sequence Explorer</h1>
+    <p>Learn general terms, number machines &amp; finding the <em>n</em>th term — by playing!</p>
+  </header>
+
+  <div class="score-bar">
+    <div class="score-item">⭐ Stars: <span class="value" id="stars">0</span></div>
+    <div class="score-item">🏆 Score: <span class="value" id="score">0</span></div>
+    <div class="score-item">🎯 Level: <span class="value" id="level-display">1</span></div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-panel="learn">📘 Learn</button>
+    <button class="nav-tab" data-panel="machine">⚙️ Number Machine</button>
+    <button class="nav-tab" data-panel="build">🧩 Build Formula</button>
+    <button class="nav-tab" data-panel="quiz">🎮 Challenge</button>
+  </div>
+
+  <!-- LEARN PANEL -->
+  <div class="panel active" id="panel-learn">
+    <h2>What is the General Term of a Sequence?</h2>
+    <div class="concept-box">
+      <p>A <strong>sequence</strong> is a list of numbers written in order. We call them:</p>
+      <ul>
+        <li><strong>T<sub>1</sub></strong> → the 1st term</li>
+        <li><strong>T<sub>2</sub></strong> → the 2nd term</li>
+        <li><strong>T<sub>3</sub></strong> → the 3rd term</li>
+        <li>… and <strong>T<sub>n</sub></strong> → the <em>n</em>th term</li>
+      </ul>
+    </div>
+
+    <h3>Example: Even numbers 2, 4, 6, 8, …</h3>
+    <div class="sequence-display" id="learn-seq">
+      <div class="term-chip"><span class="n-label">T<sub>1</sub></span>2</div>
+      <div class="term-chip"><span class="n-label">T<sub>2</sub></span>4</div>
+      <div class="term-chip"><span class="n-label">T<sub>3</sub></span>6</div>
+      <div class="term-chip"><span class="n-label">T<sub>4</sub></span>8</div>
+      <div class="term-chip"><span class="n-label">…</span></div>
+    </div>
+
+    <p>Look at the pattern:</p>
+    <div class="formula-big">
+      T<sub>1</sub> = 2 × <span style="color:#10b981">1</span><br>
+      T<sub>2</sub> = 2 × <span style="color:#10b981">2</span><br>
+      T<sub>3</sub> = 2 × <span style="color:#10b981">3</span><br>
+      T<sub>4</sub> = 2 × <span style="color:#10b981">4</span>
+    </div>
+    <p>So the <strong>general term</strong> is:</p>
+    <div class="formula-big" style="color:#4f46e5">T<sub>n</sub> = 2n</div>
+    <p>Once you have the general term, you can find <strong>any</strong> term without listing the whole sequence!</p>
+    <p class="hint">Try it: the 100th term is T<sub>100</sub> = 2 × 100 = 200.</p>
+
+    <div class="controls">
+      <button class="btn" onclick="goToPanel('machine')">Try the Number Machine →</button>
+    </div>
+  </div>
+
+  <!-- MACHINE PANEL -->
+  <div class="panel" id="panel-machine">
+    <h2>⚙️ The Number Machine</h2>
+    <p>Think of the general term as a <strong>machine</strong>. You put in a number <em>n</em> (the position) and it spits out the term T<sub>n</sub>.</p>
+
+    <div class="machine">
+      <div class="machine-box">
+        <label>Input n</label>
+        <input type="number" class="machine-input" id="machine-n" value="7" min="1" max="200">
+      </div>
+      <div class="arrow">→</div>
+      <div class="number-machine">
+        <div class="formula" id="machine-formula">T<sub>n</sub> = 2n</div>
+        <div class="label">Number Machine</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="machine-box">
+        <label>Output T<sub>n</sub></label>
+        <div class="machine-output" id="machine-out">14</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-accent" onclick="runMachine()">Run Machine</button>
+      <button class="btn btn-sm" onclick="setMachineFormula(2,0)">T<sub>n</sub> = 2n</button>
+      <button class="btn btn-sm" onclick="setMachineFormula(3,1)">T<sub>n</sub> = 3n + 1</button>
+      <button class="btn btn-sm" onclick="setMachineFormula(1,5)">T<sub>n</sub> = n + 5</button>
+      <button class="btn btn-sm" onclick="setMachineFormula(-2,10)">T<sub>n</sub> = 10 − 2n</button>
+    </div>
+
+    <h3>Try these challenges</h3>
+    <div class="quiz-card" id="machine-challenge">
+      <p id="mc-question">What is the 5th term when T<sub>n</sub> = 2n?</p>
+      <div class="input-row">
+        <input type="number" id="mc-answer" placeholder="Your answer">
+        <button class="btn btn-sm" onclick="checkMachineChallenge()">Check</button>
+      </div>
+      <div class="feedback" id="mc-feedback"></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Input n</th><th>1</th><th>2</th><th>3</th><th>5</th><th>10</th><th>50</th></tr>
+        </thead>
+        <tbody>
+          <tr id="machine-table-row">
+            <td><strong>Output T<sub>n</sub></strong></td>
+            <td>2</td><td>4</td><td>6</td><td>10</td><td>20</td><td>100</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">Notice: for each value of <em>n</em> there is only one corresponding value of T<sub>n</sub>. We say T<sub>n</sub> is a <strong>function</strong> of n.</p>
+  </div>
+
+  <!-- BUILD FORMULA PANEL -->
+  <div class="panel" id="panel-build">
+    <h2>🧩 Discover the General Term</h2>
+    <p>Look at the sequence and find the rule that turns the position <em>n</em> into the term.</p>
+
+    <div class="quiz-card">
+      <p><strong>Sequence:</strong> <span id="build-seq" style="font-size:1.2rem;font-weight:700">3, 5, 7, 9, 11, …</span></p>
+      <p>What is the general term T<sub>n</sub>?</p>
+      <div class="quiz-options" id="build-options"></div>
+      <div class="feedback" id="build-feedback"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" onclick="nextBuild()">Next Sequence →</button>
+    </div>
+
+    <h3>Visual sequences (dot figures)</h3>
+    <p>These figures grow according to a rule. Can you find how many dots are in the <em>n</em>th figure?</p>
+    <div id="dot-figures" style="text-align:center;margin:1.25rem 0;"></div>
+    <div class="quiz-card">
+      <p id="dot-question">It is given that the <em>n</em>th figure has (2n + 1) dots. How many dots does the 6th figure have?</p>
+      <div class="input-row">
+        <input type="number" id="dot-answer" placeholder="Number of dots">
+        <button class="btn btn-sm" onclick="checkDot()">Check</button>
+      </div>
+      <div class="feedback" id="dot-feedback"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ / CHALLENGE PANEL -->
+  <div class="panel" id="panel-quiz">
+    <h2>🎮 Challenge Mode <span class="level-badge" id="quiz-level-badge">Level 1</span></h2>
+    <div class="progress-bar"><div class="progress-fill" id="quiz-progress" style="width:0%"></div></div>
+    <p id="quiz-instruction">Answer 5 questions correctly to complete the level!</p>
+
+    <div class="quiz-card" id="quiz-card">
+      <p id="quiz-question" style="font-size:1.15rem;font-weight:600;"></p>
+      <div id="quiz-visual" style="text-align:center;margin:0.75rem 0;"></div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="input-row" id="quiz-input-row" style="display:none;">
+        <input type="number" id="quiz-num-answer" placeholder="Your answer">
+        <button class="btn btn-sm" onclick="submitQuizNum()">Submit</button>
+      </div>
+      <div class="feedback" id="quiz-feedback"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-warning" id="quiz-next-btn" style="display:none;" onclick="nextQuizQuestion()">Next Question →</button>
+      <button class="btn" id="quiz-restart-btn" style="display:none;" onclick="startQuiz()">Play Again</button>
+    </div>
+
+    <div class="celebration" id="quiz-celebration" style="display:none;">
+      <h2>🎉 Level Complete!</h2>
+      <p id="celeb-text"></p>
+      <div class="controls">
+        <button class="btn btn-accent" onclick="nextLevel()">Next Level →</button>
+        <button class="btn" onclick="startQuiz()">Replay Level</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== STATE ==========
+let stars = 0, score = 0, currentLevel = 1;
+let machineA = 2, machineB = 0; // Tn = a*n + b
+let buildIndex = 0;
+let quizIndex = 0, quizCorrect = 0, quizTotal = 5;
+let answered = false;
+
+// ========== NAVIGATION ==========
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => goToPanel(tab.dataset.panel));
+});
+function goToPanel(name) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'quiz') startQuiz();
+  if (name === 'build') renderBuild();
+  if (name === 'machine') updateMachineTable();
+}
+
+// ========== SCORE ==========
+function updateScoreUI() {
+  document.getElementById('stars').textContent = stars;
+  document.getElementById('score').textContent = score;
+  document.getElementById('level-display').textContent = currentLevel;
+}
+function addScore(pts, star = false) {
+  score += pts;
+  if (star) stars++;
+  updateScoreUI();
+}
+
+// ========== NUMBER MACHINE ==========
+function setMachineFormula(a, b) {
+  machineA = a; machineB = b;
+  let formula = 'T<sub>n</sub> = ';
+  if (a === 1) formula += 'n';
+  else if (a === -1) formula += '−n';
+  else formula += a + 'n';
+  if (b > 0) formula += ' + ' + b;
+  else if (b < 0) formula += ' − ' + Math.abs(b);
+  document.getElementById('machine-formula').innerHTML = formula;
+  runMachine();
+  updateMachineTable();
+  // also update challenge
+  machineChallenges = generateMachineChallenges();
+  mcIndex = 0;
+  showMachineChallenge();
+}
+function runMachine() {
+  const n = parseInt(document.getElementById('machine-n').value) || 1;
+  const result = machineA * n + machineB;
+  document.getElementById('machine-out').textContent = result;
+}
+document.getElementById('machine-n').addEventListener('input', runMachine);
+
+function updateMachineTable() {
+  const ns = [1,2,3,5,10,50];
+  const cells = ns.map(n => `<td>${machineA * n + machineB}</td>`).join('');
+  document.getElementById('machine-table-row').innerHTML = `<td><strong>Output T<sub>n</sub></strong></td>` + cells;
+}
+
+let machineChallenges = [];
+let mcIndex = 0;
+function generateMachineChallenges() {
+  return [
+    { q: `What is the 5th term when T<sub>n</sub> = ${fmt(machineA, machineB)}?`, n: 5, ans: machineA*5+machineB },
+    { q: `What is the 10th term when T<sub>n</sub> = ${fmt(machineA, machineB)}?`, n: 10, ans: machineA*10+machineB },
+    { q: `If T<sub>n</sub> = ${fmt(machineA, machineB)}, what is T<sub>1</sub>?`, n: 1, ans: machineA*1+machineB },
+    { q: `Find the 20th term: T<sub>n</sub> = ${fmt(machineA, machineB)}`, n: 20, ans: machineA*20+machineB },
+  ];
+}
+function fmt(a,b) {
+  let s = '';
+  if (a === 1) s = 'n';
+  else if (a === -1) s = '−n';
+  else s = a + 'n';
+  if (b > 0) s += ' + ' + b;
+  else if (b < 0) s += ' − ' + Math.abs(b);
+  return s;
+}
+function showMachineChallenge() {
+  const c = machineChallenges[mcIndex % machineChallenges.length];
+  document.getElementById('mc-question').innerHTML = c.q;
+  document.getElementById('mc-answer').value = '';
+  const fb = document.getElementById('mc-feedback');
+  fb.className = 'feedback'; fb.textContent = '';
+}
+function checkMachineChallenge() {
+  const c = machineChallenges[mcIndex % machineChallenges.length];
+  const val = parseInt(document.getElementById('mc-answer').value);
+  const fb = document.getElementById('mc-feedback');
+  if (val === c.ans) {
+    fb.className = 'feedback show good';
+    fb.textContent = '✅ Correct! Tₙ = ' + c.ans;
+    addScore(10, true);
+    mcIndex++;
+    setTimeout(showMachineChallenge, 1200);
+  } else {
+    fb.className = 'feedback show bad';
+    fb.textContent = '❌ Not quite. Substitute n = ' + c.n + ' into the formula.';
+  }
+}
+machineChallenges = generateMachineChallenges();
+showMachineChallenge();
+
+// ========== BUILD FORMULA ==========
+const buildSequences = [
+  { seq: '3, 5, 7, 9, 11, …', options: ['Tₙ = 2n + 1', 'Tₙ = 3n', 'Tₙ = n + 2', 'Tₙ = 2n − 1'], correct: 0, explain: 'Each term is 2 more than the previous. T₁=3=2×1+1, T₂=5=2×2+1, …' },
+  { seq: '5, 10, 15, 20, 25, …', options: ['Tₙ = 5n', 'Tₙ = n + 5', 'Tₙ = 5n − 1', 'Tₙ = 2n + 3'], correct: 0, explain: 'Multiples of 5: Tₙ = 5n' },
+  { seq: '4, 7, 10, 13, 16, …', options: ['Tₙ = 3n + 1', 'Tₙ = 4n', 'Tₙ = n + 3', 'Tₙ = 3n − 1'], correct: 0, explain: 'Starts at 4 and adds 3 each time → Tₙ = 3n + 1' },
+  { seq: '10, 8, 6, 4, 2, …', options: ['Tₙ = 12 − 2n', 'Tₙ = 10 − n', 'Tₙ = −2n', 'Tₙ = 2n − 12'], correct: 0, explain: 'Decreases by 2: Tₙ = 12 − 2n (or 10 − 2(n−1))' },
+  { seq: '1, 4, 9, 16, 25, …', options: ['Tₙ = n²', 'Tₙ = 2n + 1', 'Tₙ = n + 3', 'Tₙ = 3n − 2'], correct: 0, explain: 'These are perfect squares: Tₙ = n²' },
+  { seq: '2, 5, 8, 11, 14, …', options: ['Tₙ = 3n − 1', 'Tₙ = 2n + 1', 'Tₙ = 3n + 1', 'Tₙ = n + 2'], correct: 0, explain: 'Adds 3 each time, starts at 2 → Tₙ = 3n − 1' },
+];
+function renderBuild() {
+  const s = buildSequences[buildIndex % buildSequences.length];
+  document.getElementById('build-seq').textContent = s.seq;
+  const opts = document.getElementById('build-options');
+  opts.innerHTML = '';
+  s.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.innerHTML = opt;
+    btn.onclick = () => checkBuild(i);
+    opts.appendChild(btn);
+  });
+  const fb = document.getElementById('build-feedback');
+  fb.className = 'feedback'; fb.textContent = '';
+  renderDotFigures();
+}
+function checkBuild(i) {
+  const s = buildSequences[buildIndex % buildSequences.length];
+  const opts = document.querySelectorAll('#build-options .quiz-option');
+  opts.forEach((o, idx) => {
+    o.onclick = null;
+    if (idx === s.correct) o.classList.add('correct');
+    else if (idx === i) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('build-feedback');
+  if (i === s.correct) {
+    fb.className = 'feedback show good';
+    fb.innerHTML = '✅ Excellent! ' + s.explain;
+    addScore(15, true);
+  } else {
+    fb.className = 'feedback show bad';
+    fb.innerHTML = '❌ The correct answer is <strong>' + s.options[s.correct] + '</strong>. ' + s.explain;
+  }
+}
+function nextBuild() {
+  buildIndex++;
+  renderBuild();
+}
+
+// Dot figures
+const dotData = [
+  { formula: '2n + 1', q: 'It is given that the nth figure has (2n + 1) dots. How many dots does the 6th figure have?', ans: 13 },
+  { formula: '3n', q: 'The nth figure has 3n dots. How many dots are in the 8th figure?', ans: 24 },
+  { formula: 'n + 2', q: 'The nth figure has (n + 2) dots. How many dots does the 15th figure have?', ans: 17 },
+  { formula: '4n − 1', q: 'The nth figure has (4n − 1) dots. Find the number of dots in the 5th figure.', ans: 19 },
+];
+let dotIndex = 0;
+function renderDotFigures() {
+  const container = document.getElementById('dot-figures');
+  container.innerHTML = '';
+  // simple growing pattern of dots for illustration
+  for (let f = 1; f <= 4; f++) {
+    const fig = document.createElement('div');
+    fig.className = 'dots-figure';
+    // draw a column of f dots + a base
+    for (let r = 0; r < f; r++) {
+      const row = document.createElement('div');
+      row.className = 'dots-row';
+      for (let c = 0; c < Math.min(f, 3); c++) {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        row.appendChild(d);
+      }
+      fig.appendChild(row);
+    }
+    const lab = document.createElement('div');
+    lab.className = 'figure-label';
+    lab.textContent = f + (f===1?'st':f===2?'nd':f===3?'rd':'th');
+    fig.appendChild(lab);
+    container.appendChild(fig);
+  }
+  const d = dotData[dotIndex % dotData.length];
+  document.getElementById('dot-question').textContent = d.q;
+  document.getElementById('dot-answer').value = '';
+  const fb = document.getElementById('dot-feedback');
+  fb.className = 'feedback'; fb.textContent = '';
+}
+function checkDot() {
+  const d = dotData[dotIndex % dotData.length];
+  const val = parseInt(document.getElementById('dot-answer').value);
+  const fb = document.getElementById('dot-feedback');
+  if (val === d.ans) {
+    fb.className = 'feedback show good';
+    fb.textContent = '✅ Correct! Substitute n into the formula.';
+    addScore(12, true);
+    dotIndex++;
+    setTimeout(renderDotFigures, 1400);
+  } else {
+    fb.className = 'feedback show bad';
+    fb.textContent = '❌ Try substituting the value of n into the given formula.';
+  }
+}
+
+// ========== QUIZ / CHALLENGE ==========
+const quizBank = {
+  1: [ // Level 1 – basic substitution
+    { type: 'mc', q: 'The general term is Tₙ = 2n. What is the 7th term?', options: ['12', '14', '16', '10'], correct: 1 },
+    { type: 'mc', q: 'Tₙ = 3n + 1. Find T₄.', options: ['13', '12', '15', '10'], correct: 0 },
+    { type: 'num', q: 'Tₙ = n + 5. What is the 9th term?', ans: 14 },
+    { type: 'mc', q: 'Which formula generates the sequence 2, 4, 6, 8, …?', options: ['Tₙ = 2n', 'Tₙ = n + 2', 'Tₙ = 2n − 1', 'Tₙ = n²'], correct: 0 },
+    { type: 'num', q: 'Tₙ = 5n. Find the 6th term.', ans: 30 },
+    { type: 'mc', q: 'If Tₙ = 10 − 2n, what is T₃?', options: ['4', '6', '8', '2'], correct: 0 },
+  ],
+  2: [ // Level 2 – slightly harder
+    { type: 'mc', q: 'Sequence: 1, 4, 7, 10, …. What is the general term?', options: ['Tₙ = 3n − 2', 'Tₙ = 3n + 1', 'Tₙ = n + 3', 'Tₙ = 2n − 1'], correct: 0 },
+    { type: 'num', q: 'Tₙ = 4n − 1. How many dots in the 8th figure?', ans: 31 },
+    { type: 'mc', q: 'A student claims there is a figure with 30 dots when Tₙ = 1 + 3n. Is this possible?', options: ['No, because 30 is never equal to 1+3n for whole n', 'Yes, when n=10', 'Yes, when n=9', 'Cannot tell'], correct: 0 },
+    { type: 'num', q: 'Tₙ = 2n + 3. Find T₂₅.', ans: 53 },
+    { type: 'mc', q: 'Which term of the sequence Tₙ = 2n is equal to 100?', options: ['50th', '100th', '25th', '200th'], correct: 0 },
+    { type: 'num', q: 'Tₙ = 7 − n. What is the 4th term?', ans: 3 },
+  ],
+  3: [ // Level 3
+    { type: 'mc', q: 'Sequence of dots: 1st has 3, 2nd has 5, 3rd has 7. General term?', options: ['Tₙ = 2n + 1', 'Tₙ = 3n', 'Tₙ = n + 2', 'Tₙ = 2n − 1'], correct: 0 },
+    { type: 'num', q: 'Tₙ = 3n − 2. Is there a figure with 40 dots? If yes enter n, if no enter 0.', ans: 14 },
+    { type: 'mc', q: 'Tₙ = n². What is the 10th term?', options: ['100', '20', '50', '90'], correct: 0 },
+    { type: 'num', q: 'Find the 100th term of Tₙ = 5n − 3.', ans: 497 },
+    { type: 'mc', q: 'For the machine Tₙ = 2n, which statement is true?', options: ['Each n gives exactly one Tₙ', 'Some n give two different Tₙ', 'Not every n has a Tₙ', 'Tₙ can be any real number for integer n'], correct: 0 },
+    { type: 'num', q: 'Tₙ = 12 − 2n. Find T₅.', ans: 2 },
+  ]
+};
+
+function startQuiz() {
+  quizIndex = 0;
+  quizCorrect = 0;
+  answered = false;
+  document.getElementById('quiz-celebration').style.display = 'none';
+  document.getElementById('quiz-card').style.display = 'block';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+  document.getElementById('quiz-restart-btn').style.display = 'none';
+  document.getElementById('quiz-level-badge').textContent = 'Level ' + currentLevel;
+  document.getElementById('quiz-instruction').textContent = 'Answer 5 questions correctly to complete the level!';
+  updateQuizProgress();
+  showQuizQuestion();
+}
+function updateQuizProgress() {
+  const pct = (quizCorrect / quizTotal) * 100;
+  document.getElementById('quiz-progress').style.width = pct + '%';
+}
+function getQuizQuestions() {
+  const bank = quizBank[Math.min(currentLevel, 3)] || quizBank[3];
+  // shuffle copy
+  return [...bank].sort(() => Math.random() - 0.5).slice(0, quizTotal);
+}
+let currentQuizSet = [];
+function showQuizQuestion() {
+  if (quizCorrect >= quizTotal) {
+    finishLevel();
+    return;
+  }
+  if (quizIndex === 0) currentQuizSet = getQuizQuestions();
+  if (quizIndex >= currentQuizSet.length) {
+    // regenerate if needed
+    currentQuizSet = getQuizQuestions();
+    quizIndex = 0;
+  }
+  const q = currentQuizSet[quizIndex];
+  answered = false;
+  document.getElementById('quiz-question').innerHTML = q.q;
+  document.getElementById('quiz-visual').innerHTML = '';
+  const optsEl = document.getElementById('quiz-options');
+  optsEl.innerHTML = '';
+  const inputRow = document.getElementById('quiz-input-row');
+  inputRow.style.display = 'none';
+  document.getElementById('quiz-feedback').className = 'feedback';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+
+  if (q.type === 'mc') {
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = opt;
+      btn.onclick = () => checkQuizMC(i);
+      optsEl.appendChild(btn);
+    });
+  } else {
+    inputRow.style.display = 'flex';
+    document.getElementById('quiz-num-answer').value = '';
+  }
+}
+function checkQuizMC(i) {
+  if (answered) return;
+  answered = true;
+  const q = currentQuizSet[quizIndex];
+  const opts = document.querySelectorAll('#quiz-options .quiz-option');
+  opts.forEach((o, idx) => {
+    o.onclick = null;
+    if (idx === q.correct) o.classList.add('correct');
+    else if (idx === i) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('quiz-feedback');
+  if (i === q.correct) {
+    fb.className = 'feedback show good';
+    fb.textContent = '✅ Correct!';
+    quizCorrect++;
+    addScore(20, true);
+  } else {
+    fb.className = 'feedback show bad';
+    fb.textContent = '❌ The correct answer is: ' + q.options[q.correct];
+  }
+  updateQuizProgress();
+  document.getElementById('quiz-next-btn').style.display = 'inline-block';
+}
+function submitQuizNum() {
+  if (answered) return;
+  answered = true;
+  const q = currentQuizSet[quizIndex];
+  const val = parseInt(document.getElementById('quiz-num-answer').value);
+  const fb = document.getElementById('quiz-feedback');
+  if (val === q.ans) {
+    fb.className = 'feedback show good';
+    fb.textContent = '✅ Correct!';
+    quizCorrect++;
+    addScore(20, true);
+  } else {
+    fb.className = 'feedback show bad';
+    fb.textContent = '❌ The correct answer is ' + q.ans + '. Remember to substitute n into Tₙ.';
+  }
+  updateQuizProgress();
+  document.getElementById('quiz-next-btn').style.display = 'inline-block';
+}
+function nextQuizQuestion() {
+  quizIndex++;
+  showQuizQuestion();
+}
+function finishLevel() {
+  document.getElementById('quiz-card').style.display = 'none';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+  const celeb = document.getElementById('quiz-celebration');
+  celeb.style.display = 'block';
+  document.getElementById('celeb-text').textContent = `You earned ${quizCorrect * 20} points and ${quizCorrect} stars this level!`;
+  addScore(50, true); // bonus
+}
+function nextLevel() {
+  currentLevel++;
+  if (currentLevel > 3) currentLevel = 1; // loop
+  updateScoreUI();
+  startQuiz();
+}
+
+// Init
+updateScoreUI();
+runMachine();
+updateMachineTable();
+renderBuild();
+</script>
+</body>
+</html>
